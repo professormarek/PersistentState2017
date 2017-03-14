@@ -1,12 +1,82 @@
 package com.example.teaching.persistentstate;
 
+import android.content.Context;
 import android.content.SharedPreferences;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteOpenHelper;
+import android.provider.BaseColumns;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.EditText;
 
 public class MainActivity extends AppCompatActivity {
+
+    //to perform database interactions we need several "helper classes" to work with SQLite
+
+    /*
+    HELPER CLASS #1 for defining SQL table layouts in Java
+    we also need this because the Android database API expects an "_ID" field
+    (remember the fish!)
+     */
+    public static class MyDataEntry implements BaseColumns{
+        //here we'll define table and column names as static String constants
+        //notice that the _ID field is inherted from BaseColumns
+        //table name
+        public static final String TABLE_NAME = "studentGrades";
+        //column names
+        public static final String STUDENT_ID_COLUMN = "studentID";
+        public static final String STUDENT_GRADE_COLUMN = "studentGrade";
+    }
+    /*
+    HELPER CLASS #2 for database creation and version management
+    stores the datbase name, and version, and queries that we will use
+     */
+    public class MyDbHelper extends SQLiteOpenHelper{
+        //we're going to have some static constants to easily remember information about our database
+        //database name
+        public static final String DB_NAME = "MyCoolDatabase.db";
+        //every time the database schema changes we have to update the format
+        //by incrementing the database version (for the framework to do its job)
+        public static final int DB_VERSION = 1;
+
+        //queries - note: they're just strings
+        private static final String SQL_CREATE_TABLE_QUERY = "CREATE TABLE " + MyDataEntry.TABLE_NAME + " ("
+                +MyDataEntry._ID + " INTEGER PRIMARY KEY," + MyDataEntry.STUDENT_ID_COLUMN + " TEXT,"
+                + MyDataEntry.STUDENT_GRADE_COLUMN + " TEXT )";
+        private static final String SQL_DELETE_QUERY = "DROP TABLE IF EXISTS " + MyDataEntry.TABLE_NAME;
+
+        //constructor
+        public MyDbHelper(Context context){
+            super(context, DB_NAME, null, DB_VERSION);//call the super (base) class's constructor
+        }
+
+        /**
+         * This framework method is called whenever the database is opened but doesn't yet exist
+         * @param db - the database we're working with
+         */
+        @Override
+        public void onCreate(SQLiteDatabase db) {
+            System.out.println("Executing Query: SQL_CREATE_TABLE " + SQL_CREATE_TABLE_QUERY);
+            //execute the query on the databse
+            db.execSQL(SQL_CREATE_TABLE_QUERY);
+        }
+
+        /**
+         * this framework method is called whenever DB_VERSION is incremented
+         * that means that the database schema has changed!
+         * normally we would write some migration code here! but we're going to be lazy
+         * @param db - a reference to the database we're working with
+         * @param oldVersion
+         * @param newVersion
+         */
+        @Override
+        public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+            //shortcut - discard the table and create a new table
+            db.execSQL(SQL_DELETE_QUERY);
+            onCreate(db);
+        }
+    }
 
     public static final String PREF_FILE_NAME = "MySenecaPrefs";
 
