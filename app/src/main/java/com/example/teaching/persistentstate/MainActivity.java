@@ -3,6 +3,7 @@ package com.example.teaching.persistentstate;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.provider.BaseColumns;
@@ -90,6 +91,9 @@ public class MainActivity extends AppCompatActivity {
 
         //load preferences from the Shared Preferences file (if it exists)
         loadSharedPreferences();
+
+        //also load data from the database!
+        loadDatabase();
 
         //create a handler for the button
         Button saveGradeButton = (Button)findViewById(R.id.gradeButton);
@@ -191,6 +195,53 @@ public class MainActivity extends AppCompatActivity {
         //insert returns the primary key value for the new row in case we need it
         long newRowID = db.insert(MyDataEntry.TABLE_NAME, null, newRow);
         System.out.println("Result of database insertion " + newRowID);
+    }
+
+    /*
+    this method demontrates how to access the database for reading
+     */
+    private void loadDatabase() {
+        //get a reference to myDbHelper
+        MyDbHelper dbHelper = new MyDbHelper(this);
+        //get a readable database reference
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
+
+        //define which columns we want included in our query
+        String[] query_columns = {
+                MyDataEntry._ID,
+                MyDataEntry.STUDENT_ID_COLUMN,
+                MyDataEntry.STUDENT_GRADE_COLUMN
+        };
+        //construct a select query (String)
+        String selectQuery = MyDataEntry.STUDENT_ID_COLUMN + " = ?";
+        //add arguments to the seelct query
+        String[] selectionArgs = {" Filter string "};
+        //define how we want the results  to be ordered
+        String sortOrder = MyDataEntry.STUDENT_ID_COLUMN + " DESC";
+        //form our select query - get a cursor object (see documentation)
+        Cursor cursor = db.query(
+                MyDataEntry.TABLE_NAME,
+                query_columns,
+                null,
+                null,
+                null,
+                null,
+                sortOrder
+        );
+        //move the cursor to the first query result
+        boolean hasMoreData = cursor.moveToFirst();
+        while (hasMoreData) {
+            // get the value out of each column
+            long key = cursor.getLong(cursor.getColumnIndexOrThrow(MyDataEntry._ID));
+            String studentID = cursor.getString(cursor.getColumnIndexOrThrow(MyDataEntry.STUDENT_ID_COLUMN));
+            String studentGrade = cursor.getString(cursor.getColumnIndexOrThrow(MyDataEntry.STUDENT_GRADE_COLUMN));
+            //For now, just print out the record to the log.
+            //TODO: For your lab, you will populate an ArrayList that backs a ListView
+            System.out.println("RECORD KEY: " + key + " student id: " + studentID + " student grade : " + studentGrade);
+            //move on to the next row!
+            hasMoreData = cursor.moveToNext();
+        }
+
     }
 
 }
