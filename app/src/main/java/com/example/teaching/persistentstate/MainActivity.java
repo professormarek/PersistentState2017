@@ -1,5 +1,6 @@
 package com.example.teaching.persistentstate;
 
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.database.sqlite.SQLiteDatabase;
@@ -8,6 +9,8 @@ import android.provider.BaseColumns;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
+import android.widget.Button;
 import android.widget.EditText;
 
 public class MainActivity extends AppCompatActivity {
@@ -87,6 +90,16 @@ public class MainActivity extends AppCompatActivity {
 
         //load preferences from the Shared Preferences file (if it exists)
         loadSharedPreferences();
+
+        //create a handler for the button
+        Button saveGradeButton = (Button)findViewById(R.id.gradeButton);
+        saveGradeButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                //delegate the work to a method
+                saveGrade();
+            }
+        });
     }
 
     @Override
@@ -145,6 +158,39 @@ public class MainActivity extends AppCompatActivity {
         //or else!
         editor.commit();
 
+    }
+
+    /**
+     * this method demonstrates how to save data in the database
+     */
+    private void saveGrade(){
+        /*
+        here we write the student id and grade to the dtabase
+        ideally, any work we do with the database could be time-consuming (processing time)
+        so it should be done in an AsyncTask - I leave this to you as an exercise!
+        */
+
+        //get an instance of MyDbHelper - notice it requires a Context object
+        MyDbHelper dbHelper = new MyDbHelper(this);
+        //get a writeable reference to the database using dbHelper
+        SQLiteDatabase db = dbHelper.getWritableDatabase();
+
+        //1) create a new map of values representing the new row in the table
+        //where the column names are the table keys
+        ContentValues newRow = new ContentValues();
+        //2) add rows to the map
+        EditText studentIDbox = (EditText)findViewById(R.id.studentId);
+        String studentID = studentIDbox.getText().toString();
+        EditText studentGradeBox = (EditText)findViewById(R.id.studentGrade);
+        String studentGrade = studentGradeBox.getText().toString();
+        newRow.put(MyDataEntry.STUDENT_ID_COLUMN, studentID);
+        newRow.put(MyDataEntry.STUDENT_GRADE_COLUMN, studentGrade);
+        System.out.println("Writing a row to the database: " + studentID + " " + studentGrade);
+        //insert the new row into the table
+        //middle argument is what to insert in case newRow is a null object (null)
+        //insert returns the primary key value for the new row in case we need it
+        long newRowID = db.insert(MyDataEntry.TABLE_NAME, null, newRow);
+        System.out.println("Result of database insertion " + newRowID);
     }
 
 }
